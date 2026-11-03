@@ -1,0 +1,15 @@
+import {useState,type FormEvent} from 'react';
+import {Link,useNavigate,useSearchParams} from 'react-router-dom';
+import {ArrowRight,Eye,EyeOff,ShieldCheck} from 'lucide-react';
+import {send} from '../api';
+import {useAuth} from '../state';
+import {ErrorBox} from '../components/UI';
+import type {User} from '../types';
+
+export default function Auth({register=false}:{register?:boolean}){
+  const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[name,setName]=useState(''),[visible,setVisible]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
+  const {setUser}=useAuth(),navigate=useNavigate(),[params]=useSearchParams();
+  const rawNext=params.get('next')||'/',next=rawNext.startsWith('/')&&!rawNext.startsWith('//')?rawNext:'/';
+  async function submit(e:FormEvent){e.preventDefault();setBusy(true);setError('');try{const user=await send<User>(register?'/auth/register':'/auth/login','POST',{email,password,...(register?{display_name:name}:{})});setUser(user);navigate(next,{replace:true});}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  return <div className="auth-page"><div className="auth-story"><span className="brand-mark big"><span/></span><p className="eyebrow">ВАШИ ИНТЕРЕСЫ. ВАШИ АВТОРЫ.</p><h1>Хорошие видео<br/>сближают.</h1><p>Сохраняйте открытия, поддерживайте авторов<br/>и делитесь тем, что умеете.</p><div className="auth-orbits" aria-hidden="true"><span>▶</span><span>↗</span><span>♡</span></div></div><div className="auth-card"><h2>{register?'Создайте аккаунт':'С возвращением'}</h2><p>{register?'Немного о вас — и можно начинать.':'Войдите, чтобы продолжить просмотр.'}</p>{error&&<ErrorBox message={error}/>}<form onSubmit={submit}>{register&&<label>Как вас зовут<input autoComplete="name" required minLength={2} maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder="Ваше имя"/></label>}<label>Email<input type="email" required autoComplete="email" maxLength={254} value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label><label>Пароль<div className="password-field"><input type={visible?'text':'password'} required minLength={register?10:1} maxLength={128} autoComplete={register?'new-password':'current-password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder={register?'Не менее 10 символов':'Введите пароль'}/><button type="button" className="icon-button" aria-label={visible?'Скрыть пароль':'Показать пароль'} onClick={()=>setVisible(!visible)}>{visible?<EyeOff size={18}/>:<Eye size={18}/>}</button></div></label><button className="button primary full" disabled={busy}>{busy?'Подождите…':register?'Создать аккаунт':'Войти'}<ArrowRight size={18}/></button></form><p className="auth-switch">{register?'Уже есть аккаунт?':'Впервые здесь?'} <Link to={`${register?'/login':'/register'}?next=${encodeURIComponent(next)}`}>{register?'Войти':'Зарегистрироваться'}</Link></p><div className="auth-note"><ShieldCheck size={17}/><span>Ваши приватные видео доступны только тем, кому вы разрешили просмотр.</span></div></div></div>;
+}
