@@ -71,8 +71,8 @@ export default function Feed({ scope = "public" }: { scope?: string }) {
           </button>
         ))}
       </div>
-      <div className="feed-heading">
-        <div>
+      <div className={`feed-heading ${scope === "public" && !isSearch ? "feed-heading-home" : ""}`}>
+        {(scope !== "public" || isSearch) && <div>
           <p className="eyebrow">
             {isSearch
               ? "ПОИСК ВИДЕО"
@@ -94,7 +94,7 @@ export default function Feed({ scope = "public" }: { scope?: string }) {
                 : "Ищем видео по названию"
               : title[1]}
           </p>
-        </div>
+        </div>}
         <label className="sort">
           <SlidersHorizontal size={17} />
           <span className="sr-only">Сортировать</span>

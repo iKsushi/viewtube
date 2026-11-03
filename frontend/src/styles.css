@@ -2669,3 +2669,6 @@ fieldset {
     margin-left: 0;
   }
 }
+
+/* Keep the home feed focused on videos, like the reference service. */
+.feed-heading.feed-heading-home { justify-content: flex-end; margin: 8px 0 16px; min-height: 0; }

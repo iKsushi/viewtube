@@ -18,6 +18,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--session", type=Path, action="append", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--allow-session-id",
+        action="append",
+        default=[],
+        help="Explicitly approve an additional project session UUID",
+    )
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     if git(root, "status", "--porcelain").strip():
@@ -33,8 +39,13 @@ def main():
             (v.get("payload", {}) for v in records if v.get("type") == "session_meta"),
             None,
         )
-        if not metadata or metadata.get("id") != "01a1a14d-e714-77a0-85f2-afc12f7816ea":
+        if not metadata or metadata.get("id") not in {
+            "01a1a14d-e714-77a0-85f2-afc12f7816ea",
+            *args.allow_session_id,
+        }:
             raise SystemExit("Refusing a session unrelated to this project")
+        if any(sid == metadata["id"] or name == path.name for name, _, sid in sessions):
+            raise SystemExit("Duplicate session ID or filename")
         sessions.append((path.name, data, metadata["id"]))
     manifest = {
         "captured_at_utc": datetime.now(UTC).isoformat(),
