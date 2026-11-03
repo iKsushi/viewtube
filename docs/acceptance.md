@@ -91,3 +91,25 @@ backend 25 passed (4.14 s), HTTP smoke с настоящим S3/worker PASS.
   прокси теперь задан байтами. SeaweedFS при multipart превысил 768 МиБ
   (OOM подтверждён ядром): установлен GOMEMLIMIT=512MiB, S3 concurrency=2.
 - После изменений backend: 25 passed (3.30 s).
+
+### Чистая Ubuntu x86_64
+
+Отдельная QEMU 11.1.3 VM под Lima 2.2.1 на macOS ARM64, 2 vCPU, 4 ГиБ,
+диск 24 ГиБ. Ubuntu minimal 24.04 amd64 release-20261103, SHA-256
+`bc9237bfdfa42b5f9a4404b6c6cab595d3e57599c6498f6664ad00e6192f9595`.
+Источник: https://cloud-images.ubuntu.com/minimal/releases/noble/release-20261103/
+Docker перед запуском отсутствовал. Проверен commit 91d496c.
+
+- `bash scripts/ubuntu-x86-check.sh`: этап deploy --demo PASS; все 12
+  демо-роликов созданы, API/web healthy.
+- Backend: 25 passed, 1 warning, 81.97 s.
+- Реальный HTTP smoke с S3/worker/private isolation: PASS.
+- Тест упаковщика в новой VM: PASS.
+- Вся acceptance-команда НЕ PASS: browser stage остановился на скачивании
+  Microsoft Playwright image (сначала DNS, затем зависший повторный download).
+  Browser E2E внутри этой x86_64 VM не запускался. VM выключена после
+  сохранения локальных логов в .runtime/x86.
+
+Это полноценная x86_64 гостевая ОС, но CPU эмулируется на ARM; результаты
+не являются замером производительности физического x86_64 сервера.
+Настоящие Chrome 156.0.8078.80 и Safari 27.2 проверены отдельно на macOS ARM64.
