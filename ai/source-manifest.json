@@ -1,0 +1,50 @@
+[
+  {
+    "file": "skills/documents/SKILL.md",
+    "source": "/Users/ksushi/.codex/plugins/cache/openai-primary-runtime/documents/26.1026.10807/skills/documents/SKILL.md",
+    "bytes": 41564,
+    "sha256": "c9b9ba61ac15f20a600220bc10a380c7753992bbd3c323bfe33fae864adefc21"
+  },
+  {
+    "file": "skills/sites/SKILL.md",
+    "source": "/Users/ksushi/.codex/plugins/cache/openai-curated-remote/sites/1.1.2/skills/sites/SKILL.md",
+    "bytes": 12370,
+    "sha256": "00750ea5ca37e2b49afd2a57fee2149d22ee4f48af40bc094e6d2cee3e7bd1ad"
+  },
+  {
+    "file": "skills/sites/references/preview/local.md",
+    "source": "/Users/ksushi/.codex/plugins/cache/openai-curated-remote/sites/1.1.2/skills/sites/references/preview/local.md",
+    "bytes": 848,
+    "sha256": "af6b2dc6d586233e43820194848522df4dd56fa4c411b7a25d1f2b47fa726545"
+  },
+  {
+    "file": "skills/openai-docs/SKILL.md",
+    "source": "/Users/ksushi/.codex/skills/.system/openai-docs/SKILL.md",
+    "bytes": 5437,
+    "sha256": "aa6829e21df2223167c85d2e49b6337a7345c84c1033f1ec10182c7882b36d45"
+  },
+  {
+    "file": "agent-setup/global-AGENTS.md",
+    "source": "/Users/ksushi/.codex/AGENTS.md",
+    "bytes": 5548,
+    "sha256": "ca4ae7a9dd184708f18cf24ded793d651ca77f578ad5c92175a89c0bcbfdd462"
+  },
+  {
+    "file": "agent-setup/codex-config.toml",
+    "source": "/Users/ksushi/.codex/config.toml",
+    "bytes": 6840,
+    "sha256": "fcf9dcbbe75e49041fb729ab9050f7005ae82b10cb867757a4bc927f1dd15d1a"
+  },
+  {
+    "file": "agent-setup/codex-app-tools.mcp.json",
+    "source": "/Users/ksushi/.codex/plugins/cache/openai-bundled/codex-app-tools/26.1027.61615/.mcp.json",
+    "bytes": 1356,
+    "sha256": "39c05109c441fbab4be351533a7240f3adb906e1120577f6745846144c62e493"
+  },
+  {
+    "file": "agent-setup/unified-computer-use.mcp.json",
+    "source": "/Users/ksushi/.codex/plugins/cache/openai-bundled/unified-computer-use/26.1027.61615/.mcp.json",
+    "bytes": 2558,
+    "sha256": "232ec18d246f1a8906283cc3863b5804fb85cca81a01b7863c278122e9b47a22"
+  }
+]
