@@ -1,7 +1,3 @@
-{
-    email {$ACME_EMAIL:admin@example.com}
-}
-
 {$SITE_ADDRESS:80} {
     encode zstd gzip
     request_body {

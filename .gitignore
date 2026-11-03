@@ -16,3 +16,4 @@ backups/
 ai/sessions/
 ai/private/
 .DS_Store
+*.tsbuildinfo

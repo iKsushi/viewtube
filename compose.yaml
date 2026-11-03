@@ -1,0 +1,162 @@
+name: viewtube
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql+psycopg://viewtube:${POSTGRES_PASSWORD:?Run scripts/deploy.sh first}@db:5432/viewtube
+  SECRET_KEY: ${SECRET_KEY:?}
+  APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  S3_ENDPOINT: http://storage:8333
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:?}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:?}
+  S3_BUCKET: viewtube
+
+x-app: &app
+  image: viewtube-api:local
+  build: ./backend
+  environment: *app-env
+  networks: [internal]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  read_only: true
+  tmpfs: ["/tmp:size=64m,mode=1777"]
+  volumes: [scratch:/scratch]
+  mem_limit: 1536m
+  pids_limit: 160
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+
+services:
+  test-db:
+    image: postgres:17-alpine
+    profiles: [tests]
+    environment:
+      POSTGRES_USER: viewtube
+      POSTGRES_DB: viewtube_test
+      POSTGRES_PASSWORD: isolated-test-only
+    tmpfs: ["/var/lib/postgresql/data:size=256m,mode=0700"]
+    networks: [qa]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U viewtube -d viewtube_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+  tests:
+    profiles: [tests]
+    image: viewtube-tests:local
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    environment:
+      TEST_DATABASE_URL: postgresql+psycopg://viewtube:isolated-test-only@test-db:5432/viewtube_test
+    networks: [qa]
+    depends_on:
+      test-db: {condition: service_healthy}
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: viewtube
+      POSTGRES_DB: viewtube
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    networks: [internal]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U viewtube -d viewtube"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  storage:
+    image: viewtube-storage:local
+    build:
+      context: ./infra
+      dockerfile: seaweed.Dockerfile
+    volumes:
+      - storage_data:/data
+      - ./.runtime/s3.json:/etc/seaweedfs/s3.json:ro
+    networks: [internal]
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 768m
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  init:
+    <<: *app
+    environment:
+      <<: *app-env
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?}
+    command: [sh, -c, "alembic upgrade head && python -m app.bootstrap"]
+    depends_on:
+      db: {condition: service_healthy}
+      storage: {condition: service_started}
+    restart: "no"
+
+  api:
+    <<: *app
+    restart: unless-stopped
+    depends_on:
+      init: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/ready', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 10s
+
+  worker:
+    <<: *app
+    command: [python, -m, app.worker]
+    restart: unless-stopped
+    stop_grace_period: 65s
+    cpus: 2
+    depends_on:
+      init: {condition: service_completed_successfully}
+
+  web:
+    build: ./frontend
+    image: viewtube-web:local
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTPS_PORT:-8443}:443"
+    volumes: [caddy_data:/data, caddy_config:/config]
+    networks: [internal, edge]
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+    mem_limit: 192m
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  seed:
+    <<: *app
+    profiles: [tools]
+    environment:
+      <<: *app-env
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?}
+    command: [python, -m, app.seed]
+    depends_on:
+      api: {condition: service_healthy}
+
+volumes:
+  postgres_data:
+  storage_data:
+  caddy_data:
+  caddy_config:
+  scratch:
+
+networks:
+  qa: {internal: true}
+  internal: {internal: true}
+  edge: {}

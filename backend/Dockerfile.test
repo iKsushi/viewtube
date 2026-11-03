@@ -1,0 +1,5 @@
+FROM viewtube-api:local
+USER root
+RUN pip install -r requirements-dev.txt
+USER 10001:10001
+CMD ["pytest", "-q", "-p", "no:cacheprovider"]

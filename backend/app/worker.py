@@ -276,9 +276,9 @@ def main():
             if time.monotonic() > cleanup_at:
                 with SessionLocal() as db:
                     db.execute(delete(LoginSession).where(LoginSession.expires_at < utcnow()))
-                    # Windows use seconds=60/900/3600; retain conservatively for 2 days.
+                    # Windows are epoch seconds rounded to their bucket size.
                     db.execute(
-                        delete(RateBucket).where(RateBucket.window < int(time.time()) // 3600 - 48)
+                        delete(RateBucket).where(RateBucket.window < int(time.time()) - 172800)
                     )
                     db.commit()
                 cleanup_at = time.monotonic() + 3600

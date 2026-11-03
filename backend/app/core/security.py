@@ -91,7 +91,7 @@ def client_key(request: Request) -> str:
 
 
 def rate_limit(db: Session, key: str, limit: int, seconds: int = 60):
-    window = int(time.time()) // seconds
+    window = int(time.time()) // seconds * seconds
     stmt = insert(RateBucket).values(key=key, window=window, count=1)
     stmt = stmt.on_conflict_do_update(
         index_elements=[RateBucket.key],

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     app_origin: str = "http://localhost:8080"
     cookie_secure: bool = False
     secret_key: str = Field(min_length=32)
-    s3_endpoint: str = "http://minio:9000"
+    s3_endpoint: str = "http://storage:8333"
     s3_access_key: str
     s3_secret_key: str
     s3_bucket: str = "viewtube"

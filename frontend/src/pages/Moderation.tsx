@@ -1,22 +1,423 @@
-import {useState} from 'react';
-import {Link} from 'react-router-dom';
-import {CheckCircle2,ShieldCheck} from 'lucide-react';
-import {send} from '../api';
-import {useAuth,useQuery} from '../state';
-import {Empty,ErrorBox,Modal,Spinner} from '../components/UI';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { send } from "../api";
+import { useAuth, useQuery } from "../state";
+import { Empty, ErrorBox, Modal, Spinner } from "../components/UI";
 
-type Report={id:string;video_id:string;title:string;reason:string;status:string;hidden:boolean;created_at:string;visibility:string;resolution:string|null};
-export default function Moderation(){
-  const {user,loading}=useAuth(),[status,setStatus]=useState('open'),[page,setPage]=useState(1),reports=useQuery<Report[]>(user&&user.role!=='user'?`/moderation/reports?status=${status}&page=${page}`:null),[selected,setSelected]=useState<Report|null>(null),[action,setAction]=useState('hide'),[reason,setReason]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
-  if(loading)return <Spinner/>;if(!user||user.role==='user')return <Empty title="Раздел для модераторов" description="Для работы с жалобами нужна соответствующая роль."/>;
-  return <section><div className="page-heading"><div><p className="eyebrow">БЕЗОПАСНОЕ СООБЩЕСТВО</p><h1>Модерация</h1><p>Рассматривайте жалобы и сохраняйте причины решений.</p></div><ShieldCheck size={32}/></div><div className="tabs"><button className={status==='open'?'selected':''} onClick={()=>{setStatus('open');setPage(1);}}>На рассмотрении</button><button className={status==='resolved'?'selected':''} onClick={()=>{setStatus('resolved');setPage(1);}}>Рассмотренные</button></div>{error&&!selected&&<ErrorBox message={error}/>} {reports.loading?<Spinner/>:reports.error?<ErrorBox message={reports.error} retry={reports.reload}/>:reports.data?.length?<div className="reports">{reports.data.map(r=><article className="report-card panel" key={r.id}><div className="report-top"><span className={`badge ${r.hidden?'red':''}`}>{r.hidden?'Видео скрыто':r.visibility==='private'?'Приватное видео':'Открытое видео'}</span><small>{new Date(r.created_at).toLocaleString('ru-RU')}</small></div><h2>{r.title}</h2><p>{r.reason}</p>{r.resolution&&<p className="resolution"><CheckCircle2 size={17}/>{r.resolution}</p>}<div className="report-actions"><Link className="button secondary" to={`/watch/${r.video_id}`}>Открыть видео</Link>{r.status==='open'?<><button className="button secondary" onClick={()=>{setSelected(r);setAction('dismiss');setReason('');setError('');}}>Отклонить жалобу</button><button className="button destructive" onClick={()=>{setSelected(r);setAction('hide');setReason('');setError('');}}>Скрыть видео</button></>:r.hidden&&<button className="button secondary" disabled={busy} onClick={async()=>{setBusy(true);try{await send(`/moderation/videos/${r.video_id}/restore`,'POST');reports.reload();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>Восстановить видео</button>}</div>{r.visibility==='private'&&<small className="muted">Просмотр приватного видео зависит от разрешения владельца.</small>}</article>)}</div>:<Empty title={status==='open'?'Все жалобы рассмотрены':'Решений пока нет'} description={status==='open'?'Новые обращения появятся здесь.':'История рассмотрения появится после первого решения.'}/>} {(page>1||reports.data?.length===30)&&<div className="pagination"><button className="button secondary" disabled={page===1} onClick={()=>setPage(p=>p-1)}>Назад</button><span>{page}</span><button className="button secondary" disabled={(reports.data?.length||0)<30} onClick={()=>setPage(p=>p+1)}>Далее</button></div>}
-  {selected&&<Modal title={action==='hide'?'Скрыть видео':'Отклонить жалобу'} onClose={()=>setSelected(null)}><form onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');try{await send(`/moderation/reports/${selected.id}/resolve`,'POST',{action,reason});setSelected(null);reports.reload();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}><p>{selected.title}</p><label>Причина решения<textarea required minLength={5} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>{error&&<ErrorBox message={error}/>}<button className={`button ${action==='hide'?'destructive':'primary'}`} disabled={busy}>Подтвердить решение</button></form></Modal>}</section>;
+type Report = {
+  id: string;
+  video_id: string;
+  title: string;
+  reason: string;
+  status: string;
+  hidden: boolean;
+  created_at: string;
+  visibility: string;
+  resolution: string | null;
+};
+export default function Moderation() {
+  const { user, loading } = useAuth(),
+    [status, setStatus] = useState("open"),
+    [page, setPage] = useState(1),
+    reports = useQuery<Report[]>(
+      user && user.role !== "user"
+        ? `/moderation/reports?status=${status}&page=${page}`
+        : null,
+    ),
+    [selected, setSelected] = useState<Report | null>(null),
+    [action, setAction] = useState("hide"),
+    [reason, setReason] = useState(""),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  if (loading) return <Spinner />;
+  if (!user || user.role === "user")
+    return (
+      <Empty
+        title="Раздел для модераторов"
+        description="Для работы с жалобами нужна соответствующая роль."
+      />
+    );
+  return (
+    <section>
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">БЕЗОПАСНОЕ СООБЩЕСТВО</p>
+          <h1>Модерация</h1>
+          <p>Рассматривайте жалобы и сохраняйте причины решений.</p>
+        </div>
+        <ShieldCheck size={32} />
+      </div>
+      <div className="tabs">
+        <button
+          className={status === "open" ? "selected" : ""}
+          onClick={() => {
+            setStatus("open");
+            setPage(1);
+          }}
+        >
+          На рассмотрении
+        </button>
+        <button
+          className={status === "resolved" ? "selected" : ""}
+          onClick={() => {
+            setStatus("resolved");
+            setPage(1);
+          }}
+        >
+          Рассмотренные
+        </button>
+      </div>
+      {error && !selected && <ErrorBox message={error} />}{" "}
+      {reports.loading ? (
+        <Spinner />
+      ) : reports.error ? (
+        <ErrorBox message={reports.error} retry={reports.reload} />
+      ) : reports.data?.length ? (
+        <div className="reports">
+          {reports.data.map((r) => (
+            <article className="report-card panel" key={r.id}>
+              <div className="report-top">
+                <span className={`badge ${r.hidden ? "red" : ""}`}>
+                  {r.hidden
+                    ? "Видео скрыто"
+                    : r.visibility === "private"
+                      ? "Приватное видео"
+                      : "Открытое видео"}
+                </span>
+                <small>{new Date(r.created_at).toLocaleString("ru-RU")}</small>
+              </div>
+              <h2>{r.title}</h2>
+              <p>{r.reason}</p>
+              {r.resolution && (
+                <p className="resolution">
+                  <CheckCircle2 size={17} />
+                  {r.resolution}
+                </p>
+              )}
+              <div className="report-actions">
+                <Link className="button secondary" to={`/watch/${r.video_id}`}>
+                  Открыть видео
+                </Link>
+                {r.status === "open" ? (
+                  <>
+                    <button
+                      className="button secondary"
+                      onClick={() => {
+                        setSelected(r);
+                        setAction("dismiss");
+                        setReason("");
+                        setError("");
+                      }}
+                    >
+                      Отклонить жалобу
+                    </button>
+                    <button
+                      className="button destructive"
+                      onClick={() => {
+                        setSelected(r);
+                        setAction("hide");
+                        setReason("");
+                        setError("");
+                      }}
+                    >
+                      Скрыть видео
+                    </button>
+                  </>
+                ) : (
+                  r.hidden && (
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={async () => {
+                        setBusy(true);
+                        try {
+                          await send(
+                            `/moderation/videos/${r.video_id}/restore`,
+                            "POST",
+                          );
+                          reports.reload();
+                        } catch (e) {
+                          setError((e as Error).message);
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      Восстановить видео
+                    </button>
+                  )
+                )}
+              </div>
+              {r.visibility === "private" && (
+                <small className="muted">
+                  Просмотр приватного видео зависит от разрешения владельца.
+                </small>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <Empty
+          title={
+            status === "open" ? "Все жалобы рассмотрены" : "Решений пока нет"
+          }
+          description={
+            status === "open"
+              ? "Новые обращения появятся здесь."
+              : "История рассмотрения появится после первого решения."
+          }
+        />
+      )}{" "}
+      {(page > 1 || reports.data?.length === 30) && (
+        <div className="pagination">
+          <button
+            className="button secondary"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Назад
+          </button>
+          <span>{page}</span>
+          <button
+            className="button secondary"
+            disabled={(reports.data?.length || 0) < 30}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Далее
+          </button>
+        </div>
+      )}
+      {selected && (
+        <Modal
+          title={action === "hide" ? "Скрыть видео" : "Отклонить жалобу"}
+          onClose={() => setSelected(null)}
+        >
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setBusy(true);
+              setError("");
+              try {
+                await send(
+                  `/moderation/reports/${selected.id}/resolve`,
+                  "POST",
+                  { action, reason },
+                );
+                setSelected(null);
+                reports.reload();
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <p>{selected.title}</p>
+            <label>
+              Причина решения
+              <textarea
+                required
+                minLength={5}
+                maxLength={500}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+            {error && <ErrorBox message={error} />}
+            <button
+              className={`button ${action === "hide" ? "destructive" : "primary"}`}
+              disabled={busy}
+            >
+              Подтвердить решение
+            </button>
+          </form>
+        </Modal>
+      )}
+    </section>
+  );
 }
-type AdminUser={id:string;email:string;display_name:string;role:string};
-type Audit={id:string;action:string;created_at:string;target_id:string;detail:Record<string,string>};
-export function Admin(){
-  const {user,loading}=useAuth(),[q,setQ]=useState(''),[page,setPage]=useState(1),[tab,setTab]=useState('users'),[error,setError]=useState(''),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
-  const users=useQuery<AdminUser[]>(user?.role==='admin'?`/admin/users?q=${encodeURIComponent(q)}&page=${page}`:null),audit=useQuery<Audit[]>(user?.role==='admin'&&tab==='audit'?`/admin/audit?page=${page}`:null);
-  if(loading)return <Spinner/>;if(user?.role!=='admin')return <Empty title="Раздел для администратора" description="Для управления ролями нужна роль администратора."/>;
-  return <section><div className="page-heading"><div><p className="eyebrow">АДМИНИСТРИРОВАНИЕ</p><h1>Пользователи и права</h1><p>Роль применяется на сервере. После изменения активные сессии пользователя завершаются.</p></div></div><div className="tabs"><button className={tab==='users'?'selected':''} onClick={()=>{setTab('users');setPage(1);}}>Пользователи</button><button className={tab==='audit'?'selected':''} onClick={()=>{setTab('audit');setPage(1);}}>Журнал действий</button></div>{error&&<ErrorBox message={error}/>} {notice&&<p className="success" role="status">{notice}</p>}{tab==='users'?<><label className="admin-search">Найти по email<input type="search" value={q} onChange={e=>{setQ(e.target.value);setPage(1);}} placeholder="Email пользователя"/></label>{users.loading?<Spinner/>:users.error?<ErrorBox message={users.error}/>:<div className="panel users-list">{users.data?.map(u=><div className="user-row" key={u.id}><div><strong>{u.display_name}</strong><small>{u.email}</small></div><label><span className="sr-only">Роль {u.email}</span><select aria-label={`Роль ${u.email}`} disabled={busy||u.id===user.id} value={u.role} onChange={async e=>{const role=e.target.value;setBusy(true);setError('');try{await send(`/admin/users/${u.id}/role`,'PATCH',{role});users.reload();setNotice('Роль изменена. Пользователь должен войти заново.');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}><option value="user">Пользователь</option><option value="moderator">Модератор</option><option value="admin">Администратор</option></select></label></div>)}{users.data?.length===0&&<p>Пользователи не найдены.</p>}</div>}</>:audit.loading?<Spinner/>:audit.error?<ErrorBox message={audit.error}/>:<div className="audit-list panel">{audit.data?.map(e=><article key={e.id}><strong>{e.action}</strong><small>{new Date(e.created_at).toLocaleString('ru-RU')}</small><p>Объект: {e.target_id}</p>{Object.entries(e.detail).map(([k,v])=><p key={k}>{k}: {v}</p>)}</article>)}{audit.data?.length===0&&<p>Журнал пока пуст.</p>}</div>}<div className="pagination"><button className="button secondary" disabled={page===1} onClick={()=>setPage(p=>p-1)}>Назад</button><span>{page}</span><button className="button secondary" disabled={(tab==='users'?users.data?.length!==30:audit.data?.length!==50)} onClick={()=>setPage(p=>p+1)}>Далее</button></div></section>;
+type AdminUser = {
+  id: string;
+  email: string;
+  display_name: string;
+  role: string;
+};
+type Audit = {
+  id: string;
+  action: string;
+  created_at: string;
+  target_id: string;
+  detail: Record<string, string>;
+};
+export function Admin() {
+  const { user, loading } = useAuth(),
+    [q, setQ] = useState(""),
+    [page, setPage] = useState(1),
+    [tab, setTab] = useState("users"),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [notice, setNotice] = useState("");
+  const users = useQuery<AdminUser[]>(
+      user?.role === "admin"
+        ? `/admin/users?q=${encodeURIComponent(q)}&page=${page}`
+        : null,
+    ),
+    audit = useQuery<Audit[]>(
+      user?.role === "admin" && tab === "audit"
+        ? `/admin/audit?page=${page}`
+        : null,
+    );
+  if (loading) return <Spinner />;
+  if (user?.role !== "admin")
+    return (
+      <Empty
+        title="Раздел для администратора"
+        description="Для управления ролями нужна роль администратора."
+      />
+    );
+  return (
+    <section>
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">АДМИНИСТРИРОВАНИЕ</p>
+          <h1>Пользователи и права</h1>
+          <p>
+            Роль применяется на сервере. После изменения активные сессии
+            пользователя завершаются.
+          </p>
+        </div>
+      </div>
+      <div className="tabs">
+        <button
+          className={tab === "users" ? "selected" : ""}
+          onClick={() => {
+            setTab("users");
+            setPage(1);
+          }}
+        >
+          Пользователи
+        </button>
+        <button
+          className={tab === "audit" ? "selected" : ""}
+          onClick={() => {
+            setTab("audit");
+            setPage(1);
+          }}
+        >
+          Журнал действий
+        </button>
+      </div>
+      {error && <ErrorBox message={error} />}{" "}
+      {notice && (
+        <p className="success" role="status">
+          {notice}
+        </p>
+      )}
+      {tab === "users" ? (
+        <>
+          <label className="admin-search">
+            Найти по email
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Email пользователя"
+            />
+          </label>
+          {users.loading ? (
+            <Spinner />
+          ) : users.error ? (
+            <ErrorBox message={users.error} />
+          ) : (
+            <div className="panel users-list">
+              {users.data?.map((u) => (
+                <div className="user-row" key={u.id}>
+                  <div>
+                    <strong>{u.display_name}</strong>
+                    <small>{u.email}</small>
+                  </div>
+                  <label>
+                    <span className="sr-only">Роль {u.email}</span>
+                    <select
+                      aria-label={`Роль ${u.email}`}
+                      disabled={busy || u.id === user.id}
+                      value={u.role}
+                      onChange={async (e) => {
+                        const role = e.target.value;
+                        setBusy(true);
+                        setError("");
+                        try {
+                          await send(`/admin/users/${u.id}/role`, "PATCH", {
+                            role,
+                          });
+                          users.reload();
+                          setNotice(
+                            "Роль изменена. Пользователь должен войти заново.",
+                          );
+                        } catch (e) {
+                          setError((e as Error).message);
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      <option value="user">Пользователь</option>
+                      <option value="moderator">Модератор</option>
+                      <option value="admin">Администратор</option>
+                    </select>
+                  </label>
+                </div>
+              ))}
+              {users.data?.length === 0 && <p>Пользователи не найдены.</p>}
+            </div>
+          )}
+        </>
+      ) : audit.loading ? (
+        <Spinner />
+      ) : audit.error ? (
+        <ErrorBox message={audit.error} />
+      ) : (
+        <div className="audit-list panel">
+          {audit.data?.map((e) => (
+            <article key={e.id}>
+              <strong>{e.action}</strong>
+              <small>{new Date(e.created_at).toLocaleString("ru-RU")}</small>
+              <p>Объект: {e.target_id}</p>
+              {Object.entries(e.detail).map(([k, v]) => (
+                <p key={k}>
+                  {k}: {v}
+                </p>
+              ))}
+            </article>
+          ))}
+          {audit.data?.length === 0 && <p>Журнал пока пуст.</p>}
+        </div>
+      )}
+      <div className="pagination">
+        <button
+          className="button secondary"
+          disabled={page === 1}
+          onClick={() => setPage((p) => p - 1)}
+        >
+          Назад
+        </button>
+        <span>{page}</span>
+        <button
+          className="button secondary"
+          disabled={
+            tab === "users"
+              ? users.data?.length !== 30
+              : audit.data?.length !== 50
+          }
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Далее
+        </button>
+      </div>
+    </section>
+  );
 }
