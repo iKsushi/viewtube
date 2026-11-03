@@ -5,8 +5,8 @@ mkdir -p .runtime/acceptance
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 exec > >(tee ".runtime/acceptance/$stamp.log") 2>&1
 printf 'Acceptance UTC: %s\n' "$stamp"
-git rev-parse HEAD
-git status --short
+git -c safe.directory="$PWD" rev-parse HEAD
+git -c safe.directory="$PWD" status --short
 uname -m
 cat /etc/os-release
 python3 scripts/test_package.py

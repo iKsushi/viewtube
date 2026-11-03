@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 test('registration → upload → playback → like → comment', async ({ page }, info) => {
   const h264 = await page.evaluate(() => document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"'));
+  if (info.project.name === 'chrome') expect(h264, 'Installed Chrome must support H.264').not.toBe('');
   test.skip(!h264, 'This browser build lacks H.264; playback remains unverified, not passed.');
   const title = `E2E ${info.project.name} ${Date.now()}`;
   await page.goto('/register');
@@ -10,7 +11,7 @@ test('registration → upload → playback → like → comment', async ({ page 
   await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click();
   await expect(page).not.toHaveURL(/register/);
   await page.goto('/upload');
-  await page.getByLabel('Видеофайл').setInputFiles('/media/sample.mp4');
+  await page.getByLabel('Видеофайл').setInputFiles(process.env.E2E_MEDIA_FILE || '/media/sample.mp4');
   await page.getByLabel('Название', { exact: false }).fill(title);
   await page.getByRole('button', { name: 'Загрузить видео', exact: true }).click();
   await expect(page.getByText('Готовим ваше видео к просмотру')).toBeVisible();

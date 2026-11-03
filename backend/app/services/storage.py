@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 import boto3
+from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
@@ -38,7 +39,11 @@ def ensure_bucket():
 
 def upload(path, key, content_type):
     s3().upload_file(
-        str(path), get_settings().s3_bucket, key, ExtraArgs={"ContentType": content_type}
+        str(path),
+        get_settings().s3_bucket,
+        key,
+        ExtraArgs={"ContentType": content_type},
+        Config=TransferConfig(max_concurrency=2),
     )
 
 

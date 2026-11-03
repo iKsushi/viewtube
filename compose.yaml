@@ -73,6 +73,8 @@ services:
 
   storage:
     image: viewtube-storage:local
+    environment:
+      GOMEMLIMIT: 512MiB
     build:
       context: ./infra
       dockerfile: seaweed.Dockerfile
