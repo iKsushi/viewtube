@@ -97,6 +97,7 @@ export default function Layout() {
         <div className="header-actions">
           <Link
             className="button create-button"
+            aria-label="Создать"
             to={user ? "/upload" : "/login?next=/upload"}
           >
             <Plus size={21} />

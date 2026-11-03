@@ -268,7 +268,7 @@ export default function Studio() {
                   setSelected({ ...selected, category: e.target.value })
                 }
               >
-                {["Другое", ...categories.slice(1)].map((c) => (
+                {categories.slice(1).map((c) => (
                   <option key={c}>{c}</option>
                 ))}
               </select>

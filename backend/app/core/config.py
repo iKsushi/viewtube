@@ -20,8 +20,6 @@ class Settings(BaseSettings):
     session_days: int = 14
     worker_timeout_seconds: int = 3600
     worker_max_attempts: int = 3
-    # No exception for staff; only owners and explicit recipients may watch private videos.
-    staff_private_access: bool = False
 
 
 @lru_cache

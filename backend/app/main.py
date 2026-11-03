@@ -5,7 +5,6 @@ import uuid
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 
 from app.api import auth, community, videos
 from app.core.config import get_settings
@@ -67,7 +66,7 @@ def ready():
             db.execute(text("SELECT 1 FROM alembic_version"))
         s3().head_bucket(Bucket=get_settings().s3_bucket)
         return {"status": "ready"}
-    except (SQLAlchemyError, Exception):
+    except Exception:
         return JSONResponse({"status": "unavailable"}, status_code=503)
 
 

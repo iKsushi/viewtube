@@ -2248,6 +2248,7 @@ fieldset {
   }
   .sidebar {
     transform: translateX(-100%);
+    visibility: hidden;
     width: 230px;
     top: 108px;
     padding: 16px 12px;
@@ -2255,6 +2256,7 @@ fieldset {
     z-index: 25;
   }
   .sidebar.open {
+    visibility: visible;
     transform: translateX(0);
   }
   .sidebar .nav-item {

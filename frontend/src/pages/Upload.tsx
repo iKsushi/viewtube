@@ -209,7 +209,7 @@ export default function Upload() {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
-                {["Другое", ...categories.slice(1)].map((c) => (
+                {categories.slice(1).map((c) => (
                   <option key={c}>{c}</option>
                 ))}
               </select>

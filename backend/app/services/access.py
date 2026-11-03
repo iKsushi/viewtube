@@ -2,7 +2,6 @@ from fastapi import HTTPException
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
-from app.core.config import get_settings
 from app.models import User, Video, VideoGrant
 
 
@@ -19,8 +18,6 @@ def readable_filter(user: User | None):
             )
         )
         public = public | Video.channel.has(user_id=user.id)
-        if get_settings().staff_private_access and user.role in ("moderator", "admin"):
-            public = True
     return (Video.status == "ready") & (Video.hidden.is_(False)) & public
 
 
@@ -38,14 +35,11 @@ def require_video(db: Session, video_id: str, user: User | None, *, owner=False,
     if video.hidden or video.status != "ready":
         raise HTTPException(404, "Видео недоступно")
     if video.visibility == "private" and not is_owner:
-        is_staff = (
-            user and user.role in ("moderator", "admin") and get_settings().staff_private_access
-        )
         grant = user and db.scalar(
             select(VideoGrant.id).where(
                 VideoGrant.video_id == video.id, VideoGrant.user_id == user.id
             )
         )
-        if not grant and not is_staff:
+        if not grant:
             raise HTTPException(404, "Видео недоступно")
     return video

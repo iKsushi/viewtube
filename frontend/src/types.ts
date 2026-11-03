@@ -59,6 +59,7 @@ export const categories = [
   "Игры",
   "Кино",
   "Наука",
+  "Другое",
 ];
 export const number = (n: number) =>
   new Intl.NumberFormat("ru-RU", {
