@@ -27,7 +27,8 @@ test('registration → upload → playback → like → comment', async ({ page 
   await page.getByRole('button', { name: 'Отправить', exact: true }).click();
   await expect(page.locator('.comment').filter({ hasText: title })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Нравится', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  // A cold page reload under x86 emulation can exceed Playwright's 5s default.
+  await expect(page.getByRole('button', { name: 'Нравится', exact: true })).toHaveAttribute('aria-pressed', 'true', { timeout: 30000 });
   await expect(page.locator('.comment').filter({ hasText: title })).toBeVisible();
   await page.setViewportSize({ width: 359, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
