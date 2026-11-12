@@ -10,6 +10,23 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
+def session_text(data, path):
+    if path.suffix != ".zst":
+        return data
+    try:
+        from compression import zstd
+    except ImportError:
+        try:
+            return subprocess.run(
+                ["zstd", "-d", "-c"], input=data, capture_output=True, check=True
+            ).stdout
+        except FileNotFoundError:
+            raise SystemExit(
+                "Reading .jsonl.zst requires Python 3.14+ or the zstd CLI"
+            ) from None
+    return zstd.decompress(data)
+
+
 def git(root, *args):
     return subprocess.check_output(["git", "-C", str(root), *args])
 
@@ -34,7 +51,11 @@ def main():
     sessions = []
     for path in args.session:
         data = path.read_bytes()
-        records = [json.loads(line) for line in data.splitlines() if line.strip()]
+        records = [
+            json.loads(line)
+            for line in session_text(data, path).splitlines()
+            if line.strip()
+        ]
         metadata = next(
             (v.get("payload", {}) for v in records if v.get("type") == "session_meta"),
             None,
@@ -50,7 +71,7 @@ def main():
     manifest = {
         "captured_at_utc": datetime.now(UTC).isoformat(),
         "git_head": git(root, "rev-parse", "HEAD").decode().strip(),
-        "format": "Original Codex JSONL, exact bytes at capture time",
+        "format": "Original Codex JSONL or JSONL.zst, exact bytes at capture time",
         "note": "The active session may continue after this snapshot; re-run packaging for a later capture.",
         "sessions": [
             {

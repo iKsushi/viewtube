@@ -9,9 +9,23 @@ import unittest
 import zipfile
 from pathlib import Path
 
+try:
+    from compression import zstd
+except ImportError:
+    zstd = None
+
 
 class PackageTests(unittest.TestCase):
     def test_explicit_multiple_sessions_and_rejections(self):
+        self.packaging_contract(compressed=False)
+
+    @unittest.skipIf(
+        zstd is None, "Compressed fixture generation requires Python 3.14+"
+    )
+    def test_compressed_native_sessions_preserved(self):
+        self.packaging_contract(compressed=True)
+
+    def packaging_contract(self, compressed):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "repo"
             (root / "scripts").mkdir(parents=True)
@@ -36,10 +50,13 @@ class PackageTests(unittest.TestCase):
                 )
             sessions = []
             for sid in ["fixture-one", "fixture-two"]:
-                path = Path(temp) / f"{sid}.jsonl"
-                path.write_text(
-                    json.dumps({"type": "session_meta", "payload": {"id": sid}}) + "\n"
+                path = Path(temp) / (
+                    f"{sid}.jsonl.zst" if compressed else f"{sid}.jsonl"
                 )
+                data = (
+                    json.dumps({"type": "session_meta", "payload": {"id": sid}}) + "\n"
+                ).encode()
+                path.write_bytes(zstd.compress(data) if compressed else data)
                 sessions.append(path)
             output = Path(temp) / "submission.zip"
             base = [
