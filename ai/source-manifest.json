@@ -46,5 +46,17 @@
     "source": "/Users/ksushi/.codex/plugins/cache/openai-bundled/unified-computer-use/26.1027.61615/.mcp.json",
     "bytes": 2558,
     "sha256": "232ec18d246f1a8906283cc3863b5804fb85cca81a01b7863c278122e9b47a22"
+  },
+  {
+    "file": "agent-setup/global-AGENTS-20261112.md",
+    "source": "/Users/ksushi/.codex/AGENTS.md",
+    "bytes": 9922,
+    "sha256": "1c3cbb8f889db09897f8bad72eab2a1147b956a0ec8682dccd6ff3495862c31c"
+  },
+  {
+    "file": "agent-setup/codex-config-20261112.toml",
+    "source": "/Users/ksushi/.codex/config.toml",
+    "bytes": 7102,
+    "sha256": "1d5e499078b8c1c8a6748a67384c9e5114233299ceb9591c56608cacf8d689ac"
   }
 ]

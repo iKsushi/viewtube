@@ -10,7 +10,9 @@ git -c safe.directory="$PWD" status --short
 uname -m
 cat /etc/os-release
 python3 scripts/test_package.py
+python3 scripts/test_e2e_report.py
 bash scripts/test.sh
 docker compose exec -T api python -m app.smoke --url http://web --allow-write
 bash scripts/e2e.sh
+python3 scripts/check_e2e_report.py .runtime/e2e-results/report.json
 printf 'PASS: automated acceptance completed. Manual and external checks remain separate.\n'

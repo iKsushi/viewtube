@@ -80,6 +80,34 @@ def test_queue_claim_is_exclusive_and_expired_lease_recovers(client, db, sample_
     assert reclaimed and reclaimed[3] != old_token
 
 
+def test_chunked_upload_limit_without_content_length_and_retry(
+    client, db, sample_video, monkeypatch
+):
+    from app.core.config import get_settings
+    from app.models import VideoAsset
+
+    register(client)
+    video_id = create_video(client)
+    settings = get_settings()
+    original_limit = settings.max_upload_bytes
+    monkeypatch.setattr(settings, "max_upload_bytes", 64)
+    request = client.build_request(
+        "PUT", f"/api/videos/{video_id}/file", content=iter([b"x" * 40, b"y" * 40])
+    )
+    assert "content-length" not in request.headers
+    assert client.send(request).status_code == 413
+    assert client.get(f"/api/videos/{video_id}").json()["status"] == "failed"
+    assert db.scalar(select(VideoAsset).where(VideoAsset.video_id == video_id)) is None
+    assert db.scalar(select(ProcessingJob).where(ProcessingJob.video_id == video_id)) is None
+    monkeypatch.setattr(settings, "max_upload_bytes", original_limit)
+    assert (
+        client.put(f"/api/videos/{video_id}/file", content=sample_video.read_bytes()).status_code
+        == 202
+    )
+    assert process_one()
+    assert client.get(f"/api/videos/{video_id}").json()["status"] == "ready"
+
+
 def test_queue_stops_after_retry_budget(client, db, sample_video):
     register(client)
     video_id = create_video(client)

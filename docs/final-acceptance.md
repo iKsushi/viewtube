@@ -29,6 +29,10 @@
 Проверять не только exit code, но и число skipped: сборки без H.264
 помечаются SKIP, а не PASS. Для полной приёмки повторить сценарий
 на сборке соответствующего браузера с поддержкой H.264.
+`scripts/acceptance.sh` дополнительно проверяет JSON-отчёт через
+`scripts/check_e2e_report.py`: skipped, flaky, errors или отсутствие пройденных
+тестов останавливают процедуру. Отдельные успешные прогоны Chrome/Safari
+фиксируются в протоколе; они не превращают SKIP Linux Chromium в PASS.
 
 Расширенные проверки настоящих Chrome/Safari, Ubuntu x86_64 и предельных
 видео: [extended-checks.md](extended-checks.md).
