@@ -1,0 +1,26 @@
+{
+  "captured_at_utc": "2026-11-12T07:42:16.093367+00:00",
+  "git_head": "7acd67365b94274cdf68050f45f6dbe32cc4caa3",
+  "format": "Original Codex JSONL or JSONL.zst, exact bytes at capture time",
+  "note": "The active session may continue after this snapshot; re-run packaging for a later capture.",
+  "sessions": [
+    {
+      "file": "rollout-2026-11-03T15-06-39-01a1a14d-e714-77a0-85f2-afc12f7816ea.jsonl.zst",
+      "session_id": "01a1a14d-e714-77a0-85f2-afc12f7816ea",
+      "bytes": 2207375,
+      "sha256": "6d137377dcd14a32b3d92827587d93096c02573ece7323e98f15828acea25068"
+    },
+    {
+      "file": "rollout-2026-11-03T16-45-27-01a1a1a8-5c19-7221-b5f4-1ee07bd3995e.jsonl",
+      "session_id": "01a1a1a8-5c19-7221-b5f4-1ee07bd3995e",
+      "bytes": 1267922,
+      "sha256": "880c401c3b67755e3335b89a0dc04ce43b6e4c0aadf364644e44204d1652790c"
+    },
+    {
+      "file": "rollout-2026-11-03T17-27-42-01a1a1cf-080f-7e80-8a8b-ed0c3abf7416.jsonl",
+      "session_id": "01a1a1cf-080f-7e80-8a8b-ed0c3abf7416",
+      "bytes": 4186076,
+      "sha256": "fcf1dd24d978a11b87c95a82d90a9d9e55f0b5ab05a7926d54ef18efc7b8d115"
+    }
+  ]
+}

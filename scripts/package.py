@@ -86,7 +86,9 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(args.output, "w", zipfile.ZIP_DEFLATED) as archive:
         files = [
-            root / p.decode() for p in git(root, "ls-files", "-z").split(b"\0") if p
+            root / p.decode()
+            for p in git(root, "ls-files", "-z").split(b"\0")
+            if p and not p.startswith(b"ai/sessions/")
         ]
         files += [p for p in (root / ".git").rglob("*") if p.is_file()]
         for path in files:
